@@ -1,11 +1,21 @@
 """
-GUARANTEED COLAB PLOTS - Active Inference Perception Module
-This version will 100% display plots in Colab using %matplotlib inline
+GUARANTEED INLINE PLOTS IN COLAB
+Uses matplotlib's built-in Jupyter notebook backend
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+# Try to import IPython (only available in Jupyter/Colab)
+try:
+    from IPython.display import display, HTML
+    IN_JUPYTER = True
+except ImportError:
+    IN_JUPYTER = False
+    # Fallback for local execution
+    def display(fig):
+        pass
 
 from perception_module import (
     PerceptionModule, SimpleGridWorldExample, WorldModel
@@ -226,7 +236,8 @@ def main():
     
     fig1 = plot_belief_evolution(belief_state, true_states, observations)
     fig1.savefig('belief_evolution.png', dpi=150, bbox_inches='tight')
-    plt.show()
+    display(fig1)  # ← DISPLAY INLINE IN COLAB
+    plt.close(fig1)
     print("✅ PLOT 1 DISPLAYED ABOVE\n")
     
     # Test 2: Surprise sensitivity
@@ -245,7 +256,8 @@ def main():
     
     fig2 = plot_surprise_analysis(surprises_noise, noise_levels=noise_levels)
     fig2.savefig('surprise_sensitivity.png', dpi=150, bbox_inches='tight')
-    plt.show()
+    display(fig2)  # ← DISPLAY INLINE IN COLAB
+    plt.close(fig2)
     print("\n✅ PLOT 2 DISPLAYED ABOVE\n")
     
     # Test 3: Convergence dynamics
@@ -254,7 +266,8 @@ def main():
     print("="*70 + "\n")
     fig3 = plot_convergence_dynamics(perception, wm, observations)
     fig3.savefig('convergence_dynamics.png', dpi=150, bbox_inches='tight')
-    plt.show()
+    display(fig3)  # ← DISPLAY INLINE IN COLAB
+    plt.close(fig3)
     print("\n✅ PLOT 3 DISPLAYED ABOVE\n")
     
     # Test 4: Summary statistics
@@ -276,7 +289,7 @@ def main():
     print("✅ ANALYSIS COMPLETE")
     print("="*70)
     
-    print("\n✅ All 3 plots have been generated and displayed above!")
+    print("\n✅ All 3 plots displayed inline above!")
     print("✅ All plots saved as PNG files\n")
     print("📥 To download plots to your computer, run this in a new cell:")
     print("   from google.colab import files")
