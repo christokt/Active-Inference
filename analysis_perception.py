@@ -1,17 +1,11 @@
 """
-Colab-Optimized Analysis for Active Inference Perception Module
-
-This version:
-- Displays plots inline in Colab (automatic with plt.show())
-- Still saves plots as PNG files
-- Works in both Colab and local environments
-- Better Colab integration
+COLAB OPTIMIZED - Active Inference Perception Module Analysis
+This version properly displays plots in Google Colab using IPython.display
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from matplotlib.patches import Rectangle
 import seaborn as sns
 from perception_module import (
     PerceptionModule, SimpleGridWorldExample, WorldModel
@@ -22,14 +16,33 @@ sns.set_style("whitegrid")
 plt.rcParams['figure.figsize'] = (14, 10)
 plt.rcParams['font.size'] = 10
 
-# Try to detect if running in Colab
+# Try to detect Colab and import display functions
 try:
+    from IPython.display import display, Image
     from google.colab import files
     IN_COLAB = True
-    print("✓ Running in Google Colab!")
+    print("✅ Running in Google Colab - plots will display below!")
 except ImportError:
     IN_COLAB = False
-    print("✓ Running in local environment")
+    print("✅ Running in local environment")
+    display = lambda x: print(x)
+    Image = lambda x: x
+
+
+def show_and_save_plot(fig, filename):
+    """Save plot and display in Colab"""
+    # Save the figure
+    fig.savefig(filename, dpi=150, bbox_inches='tight')
+    
+    if IN_COLAB:
+        # Display in Colab
+        display(Image(filename))
+    else:
+        # Show normally
+        plt.show()
+    
+    plt.close(fig)
+    return filename
 
 
 def plot_belief_evolution(belief_state, true_states, observations, title="Belief Evolution"):
@@ -163,9 +176,6 @@ def plot_surprise_analysis(observations_list, surprise_list,
 def plot_convergence_dynamics(perception, wm, observations):
     """Plot VMP convergence behavior"""
     
-    # Track convergence
-    belief_state_init = perception.perceive(observations)
-    
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
     
     # Plot 1: Convergence across iterations
@@ -231,7 +241,7 @@ def main():
     """Run comprehensive analysis"""
     
     print("\n" + "="*70)
-    print("ACTIVE INFERENCE PERCEPTION MODULE - ANALYSIS & VISUALIZATION")
+    print("ACTIVE INFERENCE PERCEPTION MODULE - COLAB ANALYSIS")
     print("="*70 + "\n")
     
     # Create world model
@@ -240,7 +250,7 @@ def main():
     perception = PerceptionModule(wm, verbose=False)
     
     # Test 1: Belief evolution
-    print("\nTest 1: Belief Evolution")
+    print("\n📊 Test 1: Belief Evolution")
     print("-" * 70)
     true_states = np.array([0, 1, 2, 1, 0])
     observations = SimpleGridWorldExample.create_observation_sequence(true_states, wm.A)
@@ -250,15 +260,14 @@ def main():
     print(f"Observations:       {observations}")
     print(f"Inferred states:    {np.argmax(belief_state.state_beliefs, axis=1)}")
     print(f"Total surprise:     {belief_state.surprise:.4f}")
-    print(f"Converged in:       {belief_state.iterations} iterations")
+    print(f"Converged in:       {belief_state.iterations} iterations\n")
     
     fig1 = plot_belief_evolution(belief_state, true_states, observations)
-    fig1.savefig('belief_evolution.png', dpi=150, bbox_inches='tight')
-    plt.show()  # ← Displays in Colab!
-    print("\n✓ Belief evolution plot saved and displayed")
+    show_and_save_plot(fig1, 'belief_evolution.png')
+    print("✅ Belief evolution plot displayed above!\n")
     
     # Test 2: Surprise sensitivity
-    print("\n\nTest 2: Surprise Sensitivity to Noise")
+    print("\n📊 Test 2: Surprise Sensitivity to Noise")
     print("-" * 70)
     noise_levels = np.linspace(0.05, 0.30, 8)
     surprises_noise = []
@@ -270,22 +279,19 @@ def main():
         surprises_noise.append(result.surprise)
         print(f"  Noise {noise:.2f}: surprise = {result.surprise:.4f}")
     
-    fig2 = plot_surprise_analysis([], surprises_noise, noise_levels=noise_levels, 
-                                 title="Noise Sensitivity")
-    fig2.savefig('surprise_sensitivity.png', dpi=150, bbox_inches='tight')
-    plt.show()  # ← Displays in Colab!
-    print("✓ Surprise sensitivity plot saved and displayed")
+    fig2 = plot_surprise_analysis([], surprises_noise, noise_levels=noise_levels)
+    show_and_save_plot(fig2, 'surprise_sensitivity.png')
+    print("\n✅ Surprise sensitivity plot displayed above!\n")
     
     # Test 3: Convergence dynamics
-    print("\n\nTest 3: Convergence Dynamics & Scalability")
+    print("\n📊 Test 3: Convergence Dynamics & Scalability")
     print("-" * 70)
     fig3 = plot_convergence_dynamics(perception, wm, observations)
-    fig3.savefig('convergence_dynamics.png', dpi=150, bbox_inches='tight')
-    plt.show()  # ← Displays in Colab!
-    print("✓ Convergence dynamics plot saved and displayed")
+    show_and_save_plot(fig3, 'convergence_dynamics.png')
+    print("✅ Convergence dynamics plot displayed above!\n")
     
-    # Test 4: Summary statistics table
-    print("\n\nTest 4: Summary Statistics")
+    # Test 4: Summary statistics
+    print("\n📊 Test 4: Summary Statistics")
     print("-" * 70)
     
     surprises_multi = []
@@ -299,18 +305,19 @@ def main():
     print(f"Max surprise:       {np.max(surprises_multi):.4f}")
     
     print("\n" + "="*70)
-    print("ANALYSIS COMPLETE")
+    print("✅ ANALYSIS COMPLETE")
     print("="*70)
     
     if IN_COLAB:
-        print("\n✅ All plots displayed above in Colab!")
-        print("✅ All plots saved to local files")
-        print("\nTo download plots, use:")
-        print("  files.download('belief_evolution.png')")
-        print("  files.download('surprise_sensitivity.png')")
-        print("  files.download('convergence_dynamics.png')")
+        print("\n✅ All 3 plots displayed above in Colab!")
+        print("✅ All plots saved to local files\n")
+        print("📥 To download plots to your computer:")
+        print("   from google.colab import files")
+        print("   files.download('belief_evolution.png')")
+        print("   files.download('surprise_sensitivity.png')")
+        print("   files.download('convergence_dynamics.png')")
     else:
-        print("\n✅ All plots saved and displayed")
+        print("\n✅ All plots saved to PNG files")
 
 
 if __name__ == "__main__":
