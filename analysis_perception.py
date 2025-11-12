@@ -4,16 +4,8 @@ This version will 100% display plots in Colab using %matplotlib inline
 """
 
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 import seaborn as sns
-
-# CRITICAL: Enable inline plotting
-try:
-    %matplotlib inline
-except:
-    pass
 
 from perception_module import (
     PerceptionModule, SimpleGridWorldExample, WorldModel
