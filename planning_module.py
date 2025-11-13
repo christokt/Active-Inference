@@ -129,14 +129,16 @@ class PlanningModule:
         state_dist = current_belief.copy()
         
         # Apply each action in sequence
-        for action in action_sequence:
+        for a in action_sequence:
             # B[s', a, s] = p(s' | s, a)
-            # Expected next state: E[s'] = sum_s B(s', action, s) * q(s)
-            action = int(action)
-            if action >= self.wm.B.shape[1]:
-                action = action % self.wm.B.shape[1]
-            # B @ state_dist: shape (num_states, num_states) @ (num_states,) = (num_states,)
-            state_dist = self.wm.B[:, action, :] @ state_dist
+            # Expected next state: E[s'] = sum_s B(s', a, s) * q(s)
+            a_idx = int(a)
+            # Ensure action index is valid
+            a_idx = a_idx % max(self.wm.B.shape[1], 1)
+            # B[:, a_idx, :] has shape (num_states, num_states)
+            # state_dist has shape (num_states,)
+            # Result: (num_states, num_states) @ (num_states,) = (num_states,)
+            state_dist = self.wm.B[:, a_idx, :] @ state_dist
         
         return state_dist
     
