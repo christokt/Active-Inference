@@ -130,9 +130,13 @@ class PlanningModule:
         
         # Apply each action in sequence
         for action in action_sequence:
-            # B[s, a, s'] = p(s' | s, a)
-            # Expected next state: E[s'] = sum_s q(s) * B(s', s, a)
-            state_dist = self.wm.B[:, action, :].T @ state_dist
+            # B[s', a, s] = p(s' | s, a)
+            # Expected next state: E[s'] = sum_s B(s', action, s) * q(s)
+            action = int(action)
+            if action >= self.wm.B.shape[1]:
+                action = action % self.wm.B.shape[1]
+            # B @ state_dist: shape (num_states, num_states) @ (num_states,) = (num_states,)
+            state_dist = self.wm.B[:, action, :] @ state_dist
         
         return state_dist
     
