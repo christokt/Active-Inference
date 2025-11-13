@@ -188,7 +188,9 @@ class ReasoningModule:
         # Rollout forward under the action
         for step in range(num_steps):
             # Apply transition: s' ~ B(s', a, s)
-            state_dist = self.wm.B[:, action, :].T @ state_dist
+            a_idx = int(action)
+            a_idx = a_idx % max(self.wm.B.shape[1], 1)
+            state_dist = self.wm.B[:, a_idx, :] @ state_dist
         
         # Convert to dictionary
         result = {state: float(prob) for state, prob in enumerate(state_dist)}
