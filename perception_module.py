@@ -116,16 +116,17 @@ class PerceptionModule:
             # At t=0, use prior instead of transition
             message_1 = self.log_prior
         else:
-            # B_π,τ-1 * s_π,τ-1 in log space: E[ln B] * s_prev
-            message_1 = self.log_B.T @ state_beliefs[tau - 1]
+            # B[i,j] = p(s_t=i | s_t-1=j)
+            # Message: B @ s_prev gives p(s_t | observations)
+            message_1 = self.log_B @ state_beliefs[tau - 1]
         
         # Message 2: Backward transition (from next timestep)
         if tau == self.wm.num_timesteps - 1:
             # At final timestep, no future states
             message_2 = np.zeros(num_states)
         else:
-            # B_π,τ^T * s_π,τ+1 in log space: E[ln B]^T * s_next
-            message_2 = self.log_B @ state_beliefs[tau + 1]
+            # Backward message: B^T @ s_next
+            message_2 = self.log_B.T @ state_beliefs[tau + 1]
         
         # Message 3: Observation likelihood
         if tau < len(observations):
@@ -193,10 +194,12 @@ class PerceptionModule:
         for t in range(num_timesteps):
             state_beliefs[t] = np.exp(self.log_prior - logsumexp(self.log_prior))
         
+        # Store previous beliefs to check convergence
+        prev_beliefs = state_beliefs.copy()
+        
         # Iterative message passing until convergence
+        iteration = 0
         for iteration in range(self.max_iterations):
-            max_error = 0.0
-            
             # Forward-backward pass over all timesteps
             for tau in range(num_timesteps):
                 # Get messages (Eq. 9)
@@ -205,21 +208,22 @@ class PerceptionModule:
                 # Update belief (Eq. 10)
                 new_belief = self._update_belief(msg1, msg2, msg3)
                 
-                # Check prediction error
-                error = self._compute_prediction_error(new_belief, msg1, msg2, msg3)
-                max_error = max(max_error, error)
-                
                 # Update belief
                 state_beliefs[tau] = new_belief
             
+            # Check convergence: compare beliefs before and after iteration
+            belief_change = np.max(np.abs(state_beliefs - prev_beliefs))
+            
             if self.verbose:
-                print(f"  Iteration {iteration}: max error = {max_error:.6f}")
+                print(f"  Iteration {iteration}: max belief change = {belief_change:.8f}")
             
             # Check convergence
-            if max_error < self.convergence_threshold:
+            if belief_change < self.convergence_threshold:
                 if self.verbose:
                     print(f"  Converged in {iteration + 1} iterations")
                 break
+            
+            prev_beliefs = state_beliefs.copy()
         
         # Compute Variational Free Energy
         vfe = self._compute_vfe(state_beliefs, observations)
@@ -259,7 +263,8 @@ class PerceptionModule:
             # Transition term: E[ln q(s_τ) - ln p(s_τ | s_τ-1)]
             transition_term = 0.0
             if tau > 0:
-                expected_log_trans = self.log_B.T @ state_beliefs[tau - 1]
+                # log_B @ s_prev gives log p(s_τ | s_τ-1)
+                expected_log_trans = self.log_B @ state_beliefs[tau - 1]
                 transition_term = np.sum(state_beliefs[tau] * 
                                        (np.log(state_beliefs[tau] + 1e-16) - expected_log_trans))
             
