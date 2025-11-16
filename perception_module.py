@@ -116,17 +116,20 @@ class PerceptionModule:
             # At t=0, use prior instead of transition
             message_1 = self.log_prior
         else:
-            # B[i,j] = p(s_t=i | s_t-1=j)
-            # Message: B @ s_prev gives p(s_t | observations)
-            message_1 = self.log_B @ state_beliefs[tau - 1]
+            # Compute in probability space first: p(s_t) = B @ s_prev
+            # Then convert to log scale to avoid numerical issues
+            trans_prob = self.wm.B @ state_beliefs[tau - 1]
+            trans_prob = np.clip(trans_prob, 1e-16, 1.0)
+            message_1 = np.log(trans_prob)
         
         # Message 2: Backward transition (from next timestep)
         if tau == self.wm.num_timesteps - 1:
             # At final timestep, no future states
             message_2 = np.zeros(num_states)
         else:
-            # Backward message: B^T @ s_next
-            message_2 = self.log_B.T @ state_beliefs[tau + 1]
+            # For now, use weak backward message (uniform)
+            # TODO: Properly derive backward message from reverse transitions
+            message_2 = np.zeros(num_states)
         
         # Message 3: Observation likelihood
         if tau < len(observations):
